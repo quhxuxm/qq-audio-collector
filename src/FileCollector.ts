@@ -13,7 +13,10 @@ export class FileCollector {
         this.historyMd5 = new Set();
         this.historyFilePath = historyFilePath;
         if (!fs.existsSync(historyFilePath)) {
-            fs.writeFileSync(historyFilePath, []);
+            fs.mkdirSync(path.dirname(historyFilePath), {
+                recursive: true
+            });
+            fs.writeFileSync(historyFilePath, [],);
         }
 
         let historyFileContent = readline.createInterface({
@@ -26,40 +29,38 @@ export class FileCollector {
 
     collect(sourceFolder: string, targetFolder: string, extensions: string[]) {
         if (!fs.existsSync(targetFolder)) {
-            fs.mkdirSync(targetFolder);
+            fs.mkdirSync(targetFolder, {
+                recursive: true
+            });
         }
-        fs.readdir(sourceFolder, (err, files: string[]) => {
-            if (err) {
-                console.log(`Can not read directory ${sourceFolder} because of error.`, err);
+        const sourceFiles = fs.readdirSync(sourceFolder);
+
+        sourceFiles.forEach((value, index, array) => {
+            let absolutePath = path.join(sourceFolder, value);
+            if (fs.lstatSync(absolutePath).isDirectory()) {
+                this.collect(absolutePath, targetFolder, extensions);
                 return;
             }
-            files.forEach((value, index, array) => {
-                let absolutePath = path.join(sourceFolder, value);
-                if (fs.lstatSync(absolutePath).isDirectory()) {
-                    this.collect(absolutePath, targetFolder, extensions);
-                    return;
-                }
-                let fileExtension = path.extname(absolutePath);
-                if (extensions.indexOf(fileExtension) < 0) {
-                    return;
-                }
-                let md5Hash = crypto.createHash('md5');
-                let fileMd5 = md5Hash.update(fs.readFileSync(absolutePath)).digest('hex');
-                if (this.historyMd5.has(fileMd5)) {
-                    this.outputIndex++;
-                    return;
-                }
-                this.historyMd5.add(fileMd5);
-                fs.appendFileSync(this.historyFilePath, fileMd5 + '\n');
-                let targetFilePath = path.join(targetFolder, `${this.outputIndex}${fileExtension}`);
-                try {
-                    fs.copyFileSync(absolutePath, targetFilePath);
-                    console.log(fileMd5);
-                    this.outputIndex++;
-                } catch (e) {
-                    console.log(`Can not copy file ${value} to ${targetFilePath} because of error.`, err);
-                }
-            })
+            let fileExtension = path.extname(absolutePath);
+            if (extensions.indexOf(fileExtension) < 0) {
+                return;
+            }
+            let md5Hash = crypto.createHash('md5');
+            let fileMd5 = md5Hash.update(fs.readFileSync(absolutePath)).digest('hex');
+            if (this.historyMd5.has(fileMd5)) {
+                this.outputIndex++;
+                return;
+            }
+            this.historyMd5.add(fileMd5);
+            fs.appendFileSync(this.historyFilePath, fileMd5 + '\n');
+            let targetFilePath = path.join(targetFolder, `${this.outputIndex}${fileExtension}`);
+            try {
+                fs.copyFileSync(absolutePath, targetFilePath);
+                console.log(fileMd5);
+                this.outputIndex++;
+            } catch (e) {
+                console.log(`Can not copy file ${value} to ${targetFilePath} because of error.`, e);
+            }
         });
     }
 }
