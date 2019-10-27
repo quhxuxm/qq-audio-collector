@@ -5,15 +5,18 @@
     "main": "dist/main.js",
     "scripts": {
         "build": "tsc",
-        "run": "tsc && node dist/main.js"
+        "run": "tsc && electron .",
+        "init": "npm install"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
-    "dependencies": {},
+    "dependencies": {
+        "electron": "^7.0.0"
+    },
     "devDependencies": {
         "typescript": "^3.6.4",
         "@types/node": "^12.11.6",
-        "amrToMp3": "^1.0.8"
+        "tslint": "^5.20.0"
     }
 }
