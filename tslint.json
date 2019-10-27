@@ -7,7 +7,8 @@
     "rules": {
         "quotemark": {
             "options": "single"
-        }
+        },
+        "no-console": false
     },
     "rulesDirectory": []
 }
